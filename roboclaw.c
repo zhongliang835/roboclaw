@@ -148,6 +148,8 @@ static uint16_t decode_crc16(uint8_t *buffer);
 //ACKed commands
 static int encode_duty_m1m2(uint8_t *buffer, uint8_t address, int16_t duty1, int16_t duty2);
 static int encode_speed_m1m2(uint8_t *buffer, uint8_t address, int32_t speed1, int32_t speed2);
+static int encode_speed_m1(uint8_t *buffer, uint8_t address, int32_t speed);
+static int encode_speed_m2(uint8_t *buffer, uint8_t address, int32_t speed);
 static int encode_speed_accel_m1m2(uint8_t *buffer, uint8_t address, int32_t speed1, int32_t speed2, uint32_t accel);
 
 //Commands with reply
@@ -250,6 +252,28 @@ static int encode_speed_m1m2(uint8_t* buffer, uint8_t address, int32_t speed1, i
 	bytes += encode_uint32(buffer, bytes, speed2);
 	bytes += encode_checksum(buffer, bytes);
 	
+	return bytes;
+}
+
+static int encode_speed_m1(uint8_t* buffer, uint8_t address, int32_t speed)
+{
+	uint8_t bytes=0;
+	buffer[bytes++]=address;
+	buffer[bytes++]=M1SPEED;
+	bytes += encode_uint32(buffer, bytes, speed);
+	bytes += encode_checksum(buffer, bytes);
+
+	return bytes;
+}
+
+static int encode_speed_m2(uint8_t* buffer, uint8_t address, int32_t speed)
+{
+	uint8_t bytes=0;
+	buffer[bytes++]=address;
+	buffer[bytes++]=M2SPEED;
+	bytes += encode_uint32(buffer, bytes, speed);
+	bytes += encode_checksum(buffer, bytes);
+
 	return bytes;
 }
 
@@ -552,6 +576,17 @@ int roboclaw_speed_m1m2(struct roboclaw *rc, uint8_t address, int speed_m1, int 
 	return send_cmd_wait_answer(rc, bytes, ROBOCLAW_ACK_BYTES, 0);
 }
 
+int roboclaw_speed_m1(struct roboclaw *rc, uint8_t address, int speed)
+{
+	int bytes=encode_speed_m1(rc->buffer, address, speed);
+	return send_cmd_wait_answer(rc, bytes, ROBOCLAW_ACK_BYTES, 0);
+}
+
+int roboclaw_speed_m2(struct roboclaw *rc, uint8_t address, int speed)
+{
+	int bytes=encode_speed_m2(rc->buffer, address, speed);
+	return send_cmd_wait_answer(rc, bytes, ROBOCLAW_ACK_BYTES, 0);
+}
 
 int roboclaw_speed_accel_m1m2(struct roboclaw *rc, uint8_t address, int speed_m1, int speed_m2, int accel)
 {	
